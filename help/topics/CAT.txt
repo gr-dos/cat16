@@ -1,0 +1,49 @@
+Topic: CAT
+Summary: Copies files, or its input, to its output, joined end to end
+Origin: cat16
+Group: command
+Files: CAT.EXE
+
+Syntax
+  CAT [-u] [--] [[drive:][path]filename ...]
+
+  filename     A file to copy to the output. Several may be given; they
+               are copied in that order, with nothing between them. A
+               name with * or ? in it is a wildcard: CAT copies each
+               file it matches, in name order. A - is the input.
+               Without a filename, CAT copies its input.
+  -u           Accepted for POSIX; CAT never holds output back anyway.
+  --           Ends the switches: a later -name is a file name.
+  --help       Shows the usage. --version shows CAT's release.
+
+Examples
+  CAT README.TXT
+    Shows README.TXT.
+  CAT PART1.TXT PART2.TXT >WHOLE.TXT
+    Makes WHOLE.TXT from PART1.TXT followed by PART2.TXT.
+  CAT *.TXT >ALL.OUT
+    Joins every .TXT file of the current directory into ALL.OUT.
+  CAT >NOTE.TXT
+    Makes NOTE.TXT from what is typed. Ctrl+Z (or F6), then Enter, ends.
+  CAT HEAD.TXT - TAIL.TXT <BODY.TXT >PAGE.TXT
+    Puts BODY.TXT between HEAD.TXT and TAIL.TXT.
+
+Exit status
+  0  Every file was copied.
+  1  A file could not be read, a wildcard matched nothing, the output
+     failed (a full disk), or a bad switch.
+
+Notes
+  Bytes are copied unchanged: CR, LF and Ctrl+Z (1Ah) in a file are
+  copied like any other byte, so binary files can be joined. Only typed
+  input, or another device, ends at a Ctrl+Z.
+
+  Never redirect the output to one of the input files: the shell empties
+  it before CAT reads it. So CAT *.TXT >ALL.TXT loses data, where
+  CAT *.TXT >ALL.OUT does not.
+
+  Wildcards are DOS's (as in DIR): only in the last part of the name,
+  and they match neither directories, hidden or system files, nor the
+  volume label. A file that cannot be read, or a wildcard that matches
+  nothing, is reported, and CAT goes on with the next. Switches come
+  before the file names. CAT is gr-dos/cat16, under the MIT license.
