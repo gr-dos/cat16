@@ -196,12 +196,7 @@ static void cat_wild(const char *pat, const char *base)
 
     /* Attribute 0: normal, read-only and archive files only; DOS leaves
        out hidden and system files, directories and the volume label. */
-    err = _dos_findfirst(pat, 0, &f);
-    if (err != 0 && err != 2 && err != 18) {    /* 2, 18: no match */
-        fail(pat, strerror(errno));             /* 3: no such path */
-        return;
-    }
-    for (; err == 0; err = _dos_findnext(&f)) {
+    for (err = _dos_findfirst(pat, 0, &f); err == 0; err = _dos_findnext(&f)) {
         if (f.attrib & (_A_SUBDIR | _A_VOLID | _A_HIDDEN | _A_SYSTEM))
             continue;
         if (count == room) {
@@ -217,6 +212,14 @@ static void cat_wild(const char *pat, const char *base)
         memcpy(names + count * NAMELEN, f.name, NAMELEN);
         names[count * NAMELEN + NAMELEN - 1] = '\0';
         count++;
+    }
+    /* The search ends with 18 (no more files), or 2 (none at all) from
+       some DOSes.  Anything else (3: no such path, or a disk error) is
+       a failure, and a partial list is not copied. */
+    if (err != 2 && err != 18) {
+        free(names);
+        fail(pat, strerror(errno));
+        return;
     }
     if (count == 0) {
         fail(pat, "no matching files");

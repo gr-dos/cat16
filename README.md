@@ -63,7 +63,9 @@ output name the pattern does not match, such as `cat *.TXT >ALL.OUT`.
   part (`S*\X.TXT`) is an error.
 - **Errors in one operand** (a missing file, a directory, an unmatched
   wildcard) are reported on standard error, and `cat` goes on with the
-  next operand; it exits with status 1 at the end.
+  next operand; it exits with status 1 at the end. A directory search
+  that fails part way (a disk error) is reported too, and none of that
+  wildcard's matches are copied, rather than a short list.
 
 ### Options
 
@@ -197,6 +199,10 @@ should give. The steps cover:
   does not turn F6 into one as MS-DOS does);
 - a full disk: a 200 KB file sent to a 160 KB floppy image fails with
   status 1;
+- a directory search that fails part way: `tests/findfail.asm` runs
+  `cat` with every DOS "find next" (INT 21h 4Fh) failing, as a disk
+  error mid-search would, and `cat` must report it and exit 1 rather
+  than copy a short list of matches;
 - the diagnostics on standard error, captured with `tests/err2out.asm`
   (from hello16), since DOS shells cannot redirect standard error;
 - the help topic: its header, plain ASCII, lines of at most 79
@@ -242,8 +248,9 @@ These are hello16's (see its README for the full text).
 - `VERSION`: the version, compiled in and printed by `--version`
 - `help/topics/CAT.txt`: the GR-DOS help topic
 - `tests/run.sh`: the test suite, run under DOSBox-X by `make test`
-- `tests/err2out.asm`, `tests/keys.asm`: 8086 test helpers (stderr
-  capture, typed keystrokes)
+- `tests/err2out.asm`, `tests/findfail.asm`, `tests/keys.asm`: 8086
+  test helpers (stderr capture, a failing directory search, typed
+  keystrokes)
 - `.github/workflows/ci.yml`: build and test on PRs and pushes to `main`
 - `.github/workflows/release.yml`: tag and release when `VERSION` changes
 

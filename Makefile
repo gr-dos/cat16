@@ -43,7 +43,7 @@ $(TOOLS_ENV): $(LIBC16)
 
 # Test helpers (8086 .COM programs), assembled with NASM.
 NASM   ?= nasm
-HELPERS = build/err2out.com build/keys.com
+HELPERS = build/err2out.com build/findfail.com build/keys.com
 
 build/%.com: tests/%.asm
 	mkdir -p build

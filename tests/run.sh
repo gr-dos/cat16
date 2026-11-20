@@ -14,6 +14,8 @@
 #   err2out.com  runs cat with standard error sent to standard output,
 #                since DOS shells cannot redirect standard error, so
 #                that diagnostics can be checked
+#   findfail.com runs cat as err2out does, with every DOS "find next"
+#                (INT 21h 4Fh) failing, as a disk error mid-search would
 #   keys.com     puts keystrokes in the BIOS keyboard buffer ("~" is
 #                Enter, "^" is Ctrl+Z), so that cat reads them from the
 #                console (CON), not from a redirected file
@@ -41,7 +43,8 @@ command -v "$DOSBOX" >/dev/null || { echo "$DOSBOX not found" >&2; exit 2; }
 for t in mformat mcopy mmd mattrib; do
     command -v $t >/dev/null || { echo "$t (mtools) not found" >&2; exit 2; }
 done
-for f in "$exe" "$helpers/err2out.com" "$helpers/keys.com"; do
+for f in "$exe" "$helpers/err2out.com" "$helpers/findfail.com" \
+         "$helpers/keys.com"; do
     [ -f "$f" ] || { echo "$f not found" >&2; exit 2; }
 done
 
@@ -57,7 +60,7 @@ export LC_ALL
 cd "$work" || exit 2
 mkdir c
 cp "$exe" c/cat.exe
-cp "$helpers/err2out.com" "$helpers/keys.com" c/
+cp "$helpers/err2out.com" "$helpers/findfail.com" "$helpers/keys.com" c/
 
 # Host names in mixed case: DOS sees them in upper case.
 printf 'alpha\n' > c/a.txt                      # LF only
@@ -236,6 +239,11 @@ call rc 47
 rem --- a wildcard with many matches
 cat MANY\F*.DAT >o48.out
 call rc 48
+rem --- a directory search that fails part way: an error, not a short list
+findfail cat.exe *.TXT A.TXT >o49.out
+call rc 49
+findfail cat.exe B.TXT >o50.out
+call rc 50
 EOS
 
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy timeout 300 \
@@ -375,6 +383,10 @@ rc 46 1; says 46 'cat: S*B\D.TXT: wildcards are allowed only in the file name'
 rc 47 1; says 47 'cat: NODIR\*.TXT: No such file or directory'
 check "step 47: later operand copied" grep -q '^bravo' O47.OUT
 rc 48 0; same 48 $(i=1; while [ $i -le 300 ]; do printf 'MANY/F%03d.DAT ' $i; i=$((i + 1)); done)
+# the error is reported, no match of *.TXT is copied, and A.TXT still is
+rc 49 1; bytes 49 'cat: *.TXT: Permission denied\r\nalpha\n'
+# the hook changes nothing else
+rc 50 0; same 50 B.txt
 
 # the GR-DOS help topic (gr-dos/gr-dos#90): its header, plain ASCII,
 # and lines that fit an 80-column screen
